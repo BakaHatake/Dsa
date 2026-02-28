@@ -1,10 +1,10 @@
 import { request } from "http";
 import { NextResponse } from "next/server";
 import axios from "axios";
-import { Calendar, Variable } from "lucide-react";
-export async function GET(request:Request){
-const {searchParams}=new URL(request.url)
-const username=searchParams.get("username")
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url)
+  const username = searchParams.get("username")
   if (!username) {
     return NextResponse.json({ error: 'Username is required' }, { status: 400 });
   }
@@ -49,24 +49,24 @@ const username=searchParams.get("username")
 
 
 
-try{
-    const response=await axios.post('https://leetcode.com/graphql',{
-        query:quert,
-        variables:{username:username}
+  try {
+    const response = await axios.post('https://leetcode.com/graphql', {
+      query: quert,
+      variables: { username: username }
     });
-    const data=response.data
-     if (data.errors || !data.data.matchedUser) {
+    const data = response.data
+    if (data.errors || !data.data.matchedUser) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
     return NextResponse.json({
-        message: "Successfully fetched from LeetCode",
-        stats: data.data.matchedUser.submitStats.acSubmissionNum,
-        totalQuestions: data.data.allQuestionsCount,
-        recentSubmissions:data.data.recentSubmissionList,
-        Calendar:data.data.matchedUser.userCalendar
+      message: "Successfully fetched from LeetCode",
+      stats: data.data.matchedUser.submitStats.acSubmissionNum,
+      totalQuestions: data.data.allQuestionsCount,
+      recentSubmissions: data.data.recentSubmissionList,
+      Calendar: data.data.matchedUser.userCalendar
     })
-}catch (error) {
+  } catch (error) {
     console.error("Error fetching from LeetCode:", error);
     return NextResponse.json({ error: 'Failed to fetch data' }, { status: 500 });
-}
+  }
 }
