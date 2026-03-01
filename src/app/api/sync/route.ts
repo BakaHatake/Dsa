@@ -23,6 +23,9 @@ export async function GET(request: Request) {
             submissions
           }
         }
+        profile {
+          ranking
+        }
         userCalendar(year: 2025) {
           activeYears
           streak
@@ -63,7 +66,8 @@ export async function GET(request: Request) {
       stats: data.data.matchedUser.submitStats.acSubmissionNum,
       totalQuestions: data.data.allQuestionsCount,
       recentSubmissions: data.data.recentSubmissionList,
-      Calendar: data.data.matchedUser.userCalendar
+      Calendar: data.data.matchedUser.userCalendar,
+      ranking: data.data.matchedUser.profile?.ranking || 0
     })
   } catch (error) {
     console.error("Error fetching from LeetCode:", error);

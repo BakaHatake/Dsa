@@ -2,6 +2,7 @@
 
 import { ArrowRight } from "lucide-react";
 import { useState } from "react";
+import Link from "next/link";
 
 export default function Home() {
     const [step, setStep] = useState(0);
@@ -129,14 +130,12 @@ export default function Home() {
                                 Next <ArrowRight className="w-5 h-5 stroke-[2.5] ml-2" />
                             </button>
                         ) : (
-                            <button
-                                onClick={() => {
-                                    alert("We will link this to the search bar later!");
-                                }}
+                            <Link
+                                href="/login"
                                 className="w-full lg:w-max px-12 py-4 bg-emerald-600 text-white text-[17px] font-bold rounded-2xl flex items-center justify-center gap-2 hover:bg-emerald-500 shadow-[0_8px_30px_-5px_#05966980] transition-all active:scale-[0.98] animate-in slide-in-from-bottom-4 duration-500"
                             >
                                 Get Started
-                            </button>
+                            </Link>
                         )}
                     </div>
 
