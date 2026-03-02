@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth, db } from "@/lib/firebase/config";
 import { doc, setDoc } from "firebase/firestore";
@@ -13,11 +13,20 @@ export default function Login() {
     const [error, setError] = useState("")
     const router = useRouter();
 
+    useEffect(() => {
+        if (typeof window !== "undefined" && localStorage.getItem("isLoggedIn") === "true") {
+            router.push("/dashboard");
+        }
+    }, [router]);
+
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
         try {
             await signInWithEmailAndPassword(auth, email, password);
+            if (typeof window !== "undefined") {
+                localStorage.setItem("isLoggedIn", "true");
+            }
             router.push("/dashboard");
         } catch (err: any) {
             console.error(err);
@@ -37,6 +46,9 @@ export default function Login() {
                 avatarUrl: userinfo.photoURL
             }, { merge: true });
 
+            if (typeof window !== "undefined") {
+                localStorage.setItem("isLoggedIn", "true");
+            }
             router.push("/dashboard");
         } catch (err: any) {
             console.error(err);

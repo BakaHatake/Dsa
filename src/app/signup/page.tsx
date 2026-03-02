@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { doc, setDoc } from "firebase/firestore";
 import { auth, app, db } from "@/lib/firebase/config"
@@ -13,6 +13,12 @@ export default function SignUp() {
     const [error, setError] = useState("")
     const router = useRouter();
 
+    useEffect(() => {
+        if (typeof window !== "undefined" && localStorage.getItem("isLoggedIn") === "true") {
+            router.push("/dashboard");
+        }
+    }, [router]);
+
     const handleGoogleSignUp = async () => {
         setError("");
         try {
@@ -25,6 +31,9 @@ export default function SignUp() {
                 avatarUrl: userinfo.photoURL
             }, { merge: true });
 
+            if (typeof window !== "undefined") {
+                localStorage.setItem("isLoggedIn", "true");
+            }
             router.push("/dashboard");
         } catch (err: any) {
             console.error(err);
@@ -47,6 +56,9 @@ export default function SignUp() {
                 fullName: fullName,
                 email: email,
             })
+            if (typeof window !== "undefined") {
+                localStorage.setItem("isLoggedIn", "true");
+            }
             router.push("/dashboard");
 
         } catch (err: any) {

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { ArrowRight, Flame, RotateCw, X, Check, History, Bell, ChevronLeft } from "lucide-react";
+import { ArrowRight, Flame, RotateCw, X, Check, History, Bell, ChevronLeft, LogOut } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
 
 interface LeetcodeData {
@@ -24,6 +24,19 @@ function DashboardContent() {
     const router = useRouter();
     const rawUsername = searchParams.get("username") || "BakaHatake"; // default for testing if none provided
     const [username, setUsername] = useState(rawUsername);
+
+    const handleLogout = async () => {
+        try {
+            const { auth } = await import("@/lib/firebase/config");
+            await auth.signOut();
+            if (typeof window !== "undefined") {
+                localStorage.removeItem("isLoggedIn");
+            }
+            router.push("/");
+        } catch (error) {
+            console.error("Error logging out", error);
+        }
+    };
 
     const [data, setData] = useState<LeetcodeData | null>(null);
     const [loading, setLoading] = useState(true);
@@ -103,26 +116,64 @@ function DashboardContent() {
         const days = [];
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        // last 35 days (7 columns * 5 rows)
-        for (let i = 34; i >= 0; i--) {
+
+        const recentACsByDate: Record<string, number> = {};
+        if (data.recentSubmissions) {
+            data.recentSubmissions.forEach((sub: any) => {
+                if (sub.statusDisplay === "Accepted") {
+                    const subDate = new Date(parseInt(sub.timestamp) * 1000);
+                    const dateStr = subDate.toDateString();
+                    recentACsByDate[dateStr] = (recentACsByDate[dateStr] || 0) + 1;
+                }
+            });
+        }
+
+        // Create days from top/left (today) to bottom/right (35 days ago)
+        for (let i = 0; i <= 34; i++) {
             const d = new Date(today);
             d.setDate(d.getDate() - i);
             const timestamp = Math.floor(d.getTime() / 1000);
 
-            // Find exact or closest timestamp in the dictionary (Leetcode gives exact UTC midnight timestamps usually)
-            // sometimes timestamps are slightly off, but exact matching works for leetcode timestamps usually mapping to UTC midnight.
             let count = 0;
-            // loop through keys to find max count on this day just in case
             for (const [key, val] of Object.entries(submissionCalendar)) {
                 const subDate = new Date(parseInt(key) * 1000);
-                subDate.setHours(0, 0, 0, 0);
-                if (subDate.getTime() === d.getTime()) {
+                if (subDate.getFullYear() === d.getFullYear() &&
+                    subDate.getMonth() === d.getMonth() &&
+                    subDate.getDate() === d.getDate()) {
                     count += val as number;
                 }
             }
+
+            // If the cache doesn't have it yet, check our real-time array
+            const dStr = d.toDateString();
+            if (recentACsByDate[dStr] && count === 0) {
+                count += recentACsByDate[dStr];
+            }
+
             days.push({ date: d, count });
         }
         return days;
+    };
+
+    const getLastSubmissionText = () => {
+        if (!data.recentSubmissions || data.recentSubmissions.length === 0) {
+            return "No recent activity";
+        }
+        const lastSub = data.recentSubmissions[0];
+        const date = new Date(parseInt(lastSub.timestamp) * 1000);
+
+        const today = new Date();
+        const isToday = date.getDate() === today.getDate() &&
+            date.getMonth() === today.getMonth() &&
+            date.getFullYear() === today.getFullYear();
+
+        const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        if (isToday) {
+            return `Last: Today, ${timeString}`;
+        } else {
+            return `Last: ${date.toLocaleDateString()}, ${timeString}`;
+        }
     };
 
     const heatmapDays = generateHeatmapDays();
@@ -145,7 +196,9 @@ function DashboardContent() {
                 </div>
                 <div className="flex items-center gap-4 text-[#8ba1b7]">
                     <Flame className={`w-5 h-5 ${streak > 0 ? "text-orange-500 fill-orange-500/20" : ""}`} />
-                    <Bell className="w-5 h-5" />
+                    <button onClick={handleLogout} className="hover:text-red-500 transition-colors" title="Logout">
+                        <LogOut className="w-5 h-5" />
+                    </button>
                 </div>
             </div>
 
@@ -212,19 +265,12 @@ function DashboardContent() {
 
                 {/* Heatmap Section */}
                 <div className="p-5 rounded-[20px] bg-[#101b31] border border-[#1e293b]/50 shadow-[0_4px_25px_-5px_rgba(0,0,0,0.5)] mt-8 relative overflow-hidden backdrop-blur-md">
-                    {streak === 0 && (
-                        <div className="absolute inset-0 z-10 bg-[#0b101e]/70 backdrop-blur-[2px] flex flex-col items-center justify-center">
-                            <span className="text-lg font-bold text-white tracking-wide">No Streak</span>
-                            <span className="text-xs font-medium text-[#ef4444] mt-1 tracking-widest uppercase">Grind Harder</span>
-                        </div>
-                    )}
-
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2">
                             <Flame className="w-[18px] h-[18px] text-[#3b82f6] fill-[#3b82f6]/20" />
                             <span className="font-bold text-white text-[15px]">{streak} Day Max Streak</span>
                         </div>
-                        <span className="text-[11px] font-medium text-[#64748b]">Last: Today, 10:24 AM</span>
+                        <span className="text-[11px] font-medium text-[#64748b]">{getLastSubmissionText()}</span>
                     </div>
 
                     <div className="grid grid-cols-7 gap-1.5 sm:gap-2 justify-between">

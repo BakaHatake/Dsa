@@ -1,11 +1,19 @@
 "use client";
 
 import { ArrowRight } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
     const [step, setStep] = useState(0);
+    const router = useRouter();
+
+    useEffect(() => {
+        if (typeof window !== "undefined" && localStorage.getItem("isLoggedIn") === "true") {
+            router.push("/dashboard");
+        }
+    }, [router]);
 
     const slides = [
         {
