@@ -4,6 +4,9 @@ import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { ArrowRight, Flame, RotateCw, X, Check, History, Bell, ChevronLeft, LogOut } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
+import { auth, db } from "@/lib/firebase/config";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
 
 interface LeetcodeData {
     message: string;
@@ -22,12 +25,13 @@ interface LeetcodeData {
 function DashboardContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
-    const rawUsername = searchParams.get("username") || "BakaHatake"; // default for testing if none provided
-    const [username, setUsername] = useState(rawUsername);
+    const [username, setUsername] = useState("");
+    const [firebaseUser, setFirebaseUser] = useState<any>(null);
+    const [showPrompt, setShowPrompt] = useState(false);
+    const [tempUsername, setTempUsername] = useState("");
 
     const handleLogout = async () => {
         try {
-            const { auth } = await import("@/lib/firebase/config");
             await auth.signOut();
             if (typeof window !== "undefined") {
                 localStorage.removeItem("isLoggedIn");
@@ -60,10 +64,72 @@ function DashboardContent() {
     };
 
     useEffect(() => {
-        if (username) {
-            fetchLeetcodeData(username);
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                setFirebaseUser(user);
+                try {
+                    const userDoc = await getDoc(doc(db, "users", user.uid));
+                    if (userDoc.exists() && userDoc.data().leetcodeUsername) {
+                        const lcUser = userDoc.data().leetcodeUsername;
+                        setUsername(lcUser);
+                        fetchLeetcodeData(lcUser);
+                    } else if (searchParams.get("username")) {
+                        const lcUser = searchParams.get("username")!;
+                        await setDoc(doc(db, "users", user.uid), { leetcodeUsername: lcUser }, { merge: true });
+                        setUsername(lcUser);
+                        fetchLeetcodeData(lcUser);
+                    } else {
+                        setShowPrompt(true);
+                        setLoading(false);
+                    }
+                } catch (err) {
+                    console.error("Error reading user doc", err);
+                    setError("Failed to verify user profile.");
+                    setLoading(false);
+                }
+            } else {
+                router.push("/login");
+            }
+        });
+        return () => unsubscribe();
+    }, [searchParams, router]);
+
+    const saveLeetcodeUsername = async () => {
+        if (!tempUsername.trim() || !firebaseUser) return;
+        setLoading(true);
+        setShowPrompt(false);
+        try {
+            await setDoc(doc(db, "users", firebaseUser.uid), { leetcodeUsername: tempUsername }, { merge: true });
+            setUsername(tempUsername);
+            fetchLeetcodeData(tempUsername);
+        } catch (err) {
+            console.error("Error saving username", err);
+            setError("Failed to save LeetCode username.");
+            setLoading(false);
         }
-    }, [username]);
+    };
+
+    if (showPrompt) {
+        return (
+            <div className="min-h-screen bg-[#0b101e] flex flex-col items-center justify-center text-white pb-[70px] px-6 text-center">
+                <h2 className="text-2xl font-bold text-white mb-2">LeetCode Username</h2>
+                <p className="text-[#8ba1b7] mb-6 text-sm">Please provide your LeetCode username to sync your stats.</p>
+                <input
+                    type="text"
+                    value={tempUsername}
+                    onChange={(e) => setTempUsername(e.target.value)}
+                    placeholder="e.g. BakaHatake"
+                    className="w-full max-w-xs bg-[#1e293b] text-white px-4 py-3 rounded-xl mb-4 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-[#2563eb]"
+                />
+                <button
+                    onClick={saveLeetcodeUsername}
+                    className="px-6 py-3 bg-[#2563eb] rounded-xl font-bold text-white hover:bg-[#3b82f6] transition-colors w-full max-w-xs shadow-lg"
+                >
+                    Save & Sync
+                </button>
+            </div>
+        );
+    }
 
     if (loading) {
         return (
@@ -127,8 +193,6 @@ function DashboardContent() {
                 }
             });
         }
-
-        // Create days from top/left (today) to bottom/right (35 days ago)
         for (let i = 0; i <= 34; i++) {
             const d = new Date(today);
             d.setDate(d.getDate() - i);
@@ -143,8 +207,6 @@ function DashboardContent() {
                     count += val as number;
                 }
             }
-
-            // If the cache doesn't have it yet, check our real-time array
             const dStr = d.toDateString();
             if (recentACsByDate[dStr] && count === 0) {
                 count += recentACsByDate[dStr];

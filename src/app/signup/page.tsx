@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 export default function SignUp() {
     const [fullName, setFullName] = useState("")
     const [email, setEmail] = useState("")
+    const [leetcodeUsername, setLeetcodeUsername] = useState("")
     const [password, setPassword] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
     const [error, setError] = useState("")
@@ -28,7 +29,8 @@ export default function SignUp() {
             await setDoc(doc(db, "users", userinfo.uid), {
                 fullName: userinfo.displayName || "Google User",
                 email: userinfo.email,
-                avatarUrl: userinfo.photoURL
+                avatarUrl: userinfo.photoURL,
+                leetcodeUsername: leetcodeUsername || ""
             }, { merge: true });
 
             if (typeof window !== "undefined") {
@@ -55,7 +57,8 @@ export default function SignUp() {
             await setDoc(doc(db, "users", userinfo.uid), {
                 fullName: fullName,
                 email: email,
-            })
+                leetcodeUsername: leetcodeUsername
+            }, { merge: true })
             if (typeof window !== "undefined") {
                 localStorage.setItem("isLoggedIn", "true");
             }
@@ -123,6 +126,25 @@ export default function SignUp() {
                                     placeholder="name@example.com"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
+                                    className="w-full bg-[#1A2234]/50 text-white border border-slate-700/50 rounded-xl pl-10 pr-4 py-3 text-[14px] focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-slate-500/80"
+                                />
+                            </div>
+                        </div>
+
+                        {/* LeetCode Username */}
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-white text-[13px] font-semibold px-0.5">LeetCode Username (Optional)</label>
+                            <div className="relative flex items-center">
+                                <div className="absolute left-3.5 text-slate-400">
+                                    <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                    </svg>
+                                </div>
+                                <input
+                                    type="text"
+                                    placeholder="e.g. BakaHatake"
+                                    value={leetcodeUsername}
+                                    onChange={(e) => setLeetcodeUsername(e.target.value)}
                                     className="w-full bg-[#1A2234]/50 text-white border border-slate-700/50 rounded-xl pl-10 pr-4 py-3 text-[14px] focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-slate-500/80"
                                 />
                             </div>
