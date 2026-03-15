@@ -53,6 +53,9 @@ function CompareContent() {
           setError("Failed to verify your profile.");
         }
       } else {
+        if (typeof window !== "undefined") {
+            localStorage.removeItem("isLoggedIn");
+        }
         router.push("/login"); 
       }
       setIsAuthLoading(false);

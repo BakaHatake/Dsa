@@ -88,6 +88,9 @@ function DashboardContent() {
                     setLoading(false);
                 }
             } else {
+                if (typeof window !== "undefined") {
+                    localStorage.removeItem("isLoggedIn");
+                }
                 router.push("/login");
             }
         });
