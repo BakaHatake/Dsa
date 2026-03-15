@@ -157,8 +157,6 @@ function DashboardContent() {
     }
 
     if (!data) return null;
-
-    // Extract Stats
     const totalSolved = data.stats.find((s: any) => s.difficulty === "All")?.count || 0;
 
     const easyStats = data.stats.find((s: any) => s.difficulty === "Easy")?.count || 0;
@@ -170,7 +168,6 @@ function DashboardContent() {
     const hardStats = data.stats.find((s: any) => s.difficulty === "Hard")?.count || 0;
     const hardTotal = data.totalQuestions.find((q: any) => q.difficulty === "Hard")?.count || 1;
 
-    // Render Heatmap (Past 35 days)
     let submissionCalendar = {};
     try {
         if (data.Calendar?.submissionCalendar) {
