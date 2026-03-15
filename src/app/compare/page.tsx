@@ -87,35 +87,19 @@ function CompareContent() {
       const usersRef = collection(db, "users");
       const trimmedTarget = targetUser.trim();
       const normalizedTarget = trimmedTarget.toLowerCase();
-  
-      let q = query(usersRef, where("leetcodeUsernameLow", "==", normalizedTarget));
-      let querySnapshot = await getDocs(q);
-      if (querySnapshot.empty) {
-        q = query(usersRef, where("leetcodeUsername", "==", trimmedTarget));
-        querySnapshot = await getDocs(q);
-      }
+      
+      const querySnapshot = await getDocs(usersRef);
+      const match = querySnapshot.docs.find(doc => {
+        const d = doc.data();
+        return d.leetcodeUsernameLow === normalizedTarget || 
+               d.leetcodeUsername?.toLowerCase() === normalizedTarget;
+      });
 
-      if (querySnapshot.empty) {
-        const allDocs = await getDocs(usersRef);
-        const match = allDocs.docs.find(doc => 
-          doc.data().leetcodeUsername?.toLowerCase() === normalizedTarget
-        );
-        if (match) {
-            const foundUserData = match.data();
-            const actualUsername = foundUserData.leetcodeUsername || trimmedTarget;
-            const res = await fetch(`/api/compare?user1=${currentUser}&user2=${actualUsername}`);
-            const json = await res.json();
-            if (!res.ok) throw new Error(json.error || "Failed to fetch profile analysis.");
-            setData(json);
-            return;
-        }
-      }
-
-      if (querySnapshot.empty) {
+      if (!match) {
         throw new Error(`The user '${targetUser}' is not registered on the Platform.`);
       }
 
-      const foundUserData = querySnapshot.docs[0].data();
+      const foundUserData = match.data();
       const actualUsername = foundUserData.leetcodeUsername || trimmedTarget;
 
       const res = await fetch(`/api/compare?user1=${currentUser}&user2=${actualUsername}`);
