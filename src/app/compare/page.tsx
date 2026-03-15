@@ -85,13 +85,18 @@ function CompareContent() {
 
     try {
       const usersRef = collection(db, "users");
-      const q = query(usersRef, where("leetcodeUsername", "==", targetUser.trim()));
+      const normalizedTarget = targetUser.trim().toLowerCase();
+      const q = query(usersRef, where("leetcodeUsernameLow", "==", normalizedTarget));
       const querySnapshot = await getDocs(q);
 
       if (querySnapshot.empty) {
         throw new Error(`The user '${targetUser}' is not registered on the Platform.`);
       }
-      const res = await fetch(`/api/compare?user1=${currentUser}&user2=${targetUser.trim()}`);
+
+      const foundUserData = querySnapshot.docs[0].data();
+      const actualUsername = foundUserData.leetcodeUsername || targetUser.trim();
+
+      const res = await fetch(`/api/compare?user1=${currentUser}&user2=${actualUsername}`);
       const json = await res.json();
 
       if (!res.ok) {

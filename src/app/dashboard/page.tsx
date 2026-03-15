@@ -75,7 +75,10 @@ function DashboardContent() {
                         fetchLeetcodeData(lcUser);
                     } else if (searchParams.get("username")) {
                         const lcUser = searchParams.get("username")!;
-                        await setDoc(doc(db, "users", user.uid), { leetcodeUsername: lcUser }, { merge: true });
+                        await setDoc(doc(db, "users", user.uid), { 
+                            leetcodeUsername: lcUser,
+                            leetcodeUsernameLow: lcUser.toLowerCase() 
+                        }, { merge: true });
                         setUsername(lcUser);
                         fetchLeetcodeData(lcUser);
                     } else {
@@ -102,7 +105,10 @@ function DashboardContent() {
         setLoading(true);
         setShowPrompt(false);
         try {
-            await setDoc(doc(db, "users", firebaseUser.uid), { leetcodeUsername: tempUsername }, { merge: true });
+            await setDoc(doc(db, "users", firebaseUser.uid), { 
+                leetcodeUsername: tempUsername,
+                leetcodeUsernameLow: tempUsername.toLowerCase()
+            }, { merge: true });
             setUsername(tempUsername);
             fetchLeetcodeData(tempUsername);
         } catch (err) {
