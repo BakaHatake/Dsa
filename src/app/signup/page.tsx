@@ -30,7 +30,7 @@ export default function SignUp() {
                 fullName: userinfo.displayName || "Google User",
                 email: userinfo.email,
                 avatarUrl: userinfo.photoURL,
-                leetcodeUsername: leetcodeUsername || ""
+                leetcodeUsername: leetcodeUsername?.toLowerCase() || ""
             }, { merge: true });
 
             if (typeof window !== "undefined") {

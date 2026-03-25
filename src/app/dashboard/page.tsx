@@ -76,8 +76,7 @@ function DashboardContent() {
                     } else if (searchParams.get("username")) {
                         const lcUser = searchParams.get("username")!;
                         await setDoc(doc(db, "users", user.uid), { 
-                            leetcodeUsername: lcUser,
-                            leetcodeUsernameLow: lcUser.toLowerCase() 
+                            leetcodeUsername: lcUser.toLowerCase(),
                         }, { merge: true });
                         setUsername(lcUser);
                         fetchLeetcodeData(lcUser);
@@ -106,8 +105,7 @@ function DashboardContent() {
         setShowPrompt(false);
         try {
             await setDoc(doc(db, "users", firebaseUser.uid), { 
-                leetcodeUsername: tempUsername,
-                leetcodeUsernameLow: tempUsername.toLowerCase()
+                leetcodeUsername: tempUsername.toLowerCase(),
             }, { merge: true });
             setUsername(tempUsername);
             fetchLeetcodeData(tempUsername);

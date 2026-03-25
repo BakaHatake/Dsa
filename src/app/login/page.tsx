@@ -204,7 +204,7 @@ export default function Login() {
 
             {/* Footer */}
             <div className="mt-12 text-center text-[10px] sm:text-[11px] font-semibold tracking-widest text-slate-500/60 z-10 relative">
-                © 2024 DSA PROBLEM SOLVER TRACKER • BUILD FOR SPEED
+                © 2026 DSA PROBLEM SOLVER TRACKER • BUILD FOR SPEED
             </div>
         </div>
     )
